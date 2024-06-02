@@ -38,9 +38,15 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        cp buildozer.spec buildozer.spec.bak
-        sed -i 's/^android\.sdk_path = .*/android.sdk_path = ${{ github.workspace }}\/android-sdk/' buildozer.spec
-        sed -i 's/^android\.ndk_path = .*/android.ndk_path = ${{ github.workspace }}\/android-ndk/' buildozer.spec
+        python3 -c "
+import configparser
+config = configparser.ConfigParser()
+config.read('buildozer.spec')
+config.set('app', 'android.sdk_path', '${{ github.workspace }}/android-sdk')
+config.set('app', 'android.ndk_path', '${{ github.workspace }}/android-ndk')
+with open('buildozer.spec', 'w') as configfile:
+    config.write(configfile)
+        "
 
     - name: Build APK
       run: buildozer -v android debug
