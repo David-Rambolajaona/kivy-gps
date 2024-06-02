@@ -37,7 +37,7 @@ jobs:
         $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-29" "build-tools;29.0.3" "extras;android;m2repository" "system-images;android-29;google_apis;x86" "emulator"
 
     - name: Configure buildozer.spec
-      run: python3 configure_buildozer_spec.py
+      run: python3 configure_buildozer_spec.py "${{ github.workspace }}/android-sdk" "${{ github.workspace }}/android-ndk"
 
     - name: Build APK
       run: buildozer -v android debug
