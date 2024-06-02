@@ -1,42 +1,52 @@
-name: CI
+name: Build Kivy APK
+
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      # used to cache dependencies with a timeout
-      - name: Get Date
-        id: get-date
-        run: |
-          echo "::set-output name=date::$(/bin/date -u "+%Y%m%d")"
-        shell: bash
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
 
-      - name: Cache Buildozer global directory
-        uses: actions/cache@v2
-        with:
-          path: .buildozer_global
-          key: buildozer-global-${{ hashFiles('buildozer.spec') }} # Replace with your path
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-pip build-essential git openjdk-8-jdk unzip
+        pip install --upgrade pip
+        pip install cython buildozer
 
-      - uses: actions/cache@v2
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-${{ steps.get-date.outputs.date }}-${{ hashFiles('buildozer.spec') }}
+    - name: Set up Android SDK
+      env:
+        ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+      run: |
+        mkdir -p $ANDROID_SDK_ROOT
+        curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
+        unzip -d $ANDROID_SDK_ROOT sdk-tools.zip
+        yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+        $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-29" "build-tools;29.0.3" "extras;android;m2repository" "system-images;android-29;google_apis;x86" "emulator"
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
-        with:
-          command: buildozer android debug
-          buildozer_version: master
+    - name: Configure buildozer.spec
+      run: |
+        cp buildozer.spec buildozer.spec.bak
+        sed -i 's/^android\.sdk_path = .*/android.sdk_path = ${{ github.workspace }}\/android-sdk/' buildozer.spec
+        sed -i 's/^android\.ndk_path = .*/android.ndk_path = ${{ github.workspace }}\/android-ndk/' buildozer.spec
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+    - name: Build APK
+      run: buildozer -v android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: app
+        path: bin/*.apk
