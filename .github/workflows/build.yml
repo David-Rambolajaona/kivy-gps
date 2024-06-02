@@ -38,7 +38,7 @@ jobs:
 
     - name: Configure buildozer.spec
       run: |
-        python3 -c "
+        python3 - <<EOF
 import configparser
 config = configparser.ConfigParser()
 config.read('buildozer.spec')
@@ -46,7 +46,7 @@ config.set('app', 'android.sdk_path', '${{ github.workspace }}/android-sdk')
 config.set('app', 'android.ndk_path', '${{ github.workspace }}/android-ndk')
 with open('buildozer.spec', 'w') as configfile:
     config.write(configfile)
-        "
+EOF
 
     - name: Build APK
       run: buildozer -v android debug
