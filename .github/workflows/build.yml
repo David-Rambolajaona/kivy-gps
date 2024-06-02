@@ -41,11 +41,11 @@ jobs:
         env:
           ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
         run: |
-          mkdir -p $ANDROID_SDK_ROOT
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
           curl -o sdk-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
-          unzip -d $ANDROID_SDK_ROOT sdk-tools.zip
-          $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "cmdline-tools;latest"
-          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-29" "build-tools;29.0.3" "extras;android;m2repository" "system-images;android-29;google_apis;x86" "emulator"
+          unzip -d $ANDROID_SDK_ROOT/cmdline-tools sdk-tools.zip
+          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest
+          $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "cmdline-tools;latest" "platform-tools" "platforms;android-29" "build-tools;29.0.3" "extras;android;m2repository" "system-images;android-29;google_apis;x86" "emulator"
           chmod +x accept-licenses.sh
           ./accept-licenses.sh
 
